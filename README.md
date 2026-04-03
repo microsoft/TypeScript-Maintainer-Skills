@@ -41,7 +41,7 @@ The skill walks you through an interactive workflow to **reduce a bug repro** do
  * For Claude Code, clone this repo and copy the skill to your personal skills directory:
    ```
    git clone https://github.com/microsoft/TypeScript-Maintainer-Skills /tmp/ts-skills
-   cp -r /tmp/ts-skills/.agents/skills/ts-maintain-reduce-repro ~/.claude/skills/
+   cp -r /tmp/ts-skills/.github/skills/ts-maintain-reduce-repro ~/.claude/skills/
    ```
 
 2. **Invoke** the skill, usually with 
