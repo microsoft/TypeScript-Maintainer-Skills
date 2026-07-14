@@ -52,3 +52,33 @@ The skill walks you through an interactive workflow to **reduce a bug repro** do
 3. **Answer** the prompts. There are 3-6 questions depending on the bug report.
 4. **Let it work.** This typically takes at least 2 minutes and might be up to an hour for very complex repros.
 5. **Get your minimal repro!** When it's done, you'll have a clean, minimal reproduction that's ready to attach to a TypeScript issue.
+
+## Build Repo
+
+```
+/build-repo
+```
+
+A Copilot skill that gets an unseen (possibly old or abandoned) TypeScript/JavaScript GitHub repo building in a disposable sandbox. It detects the era-appropriate toolchain, runs the documented setup, then drives Setup/Compile/Test/Runtime to green with a progress-based convergence loop.
+
+### What It Does
+
+- Clones and orients in the repo, reading documentation prose first
+- Selects and installs the correct Node version (era-appropriate for old repos)
+- Installs dependencies with frozen lockfiles when possible
+- Drives each phase (Setup → Compile → Test → Runtime) to green via a convergence loop
+- Honestly reports what worked, what failed, and what it took to get there
+
+### Use Cases
+
+- Bringing up an unfamiliar repo for the first time
+- Auditing whether a repo's documented setup instructions actually work
+- Building old/abandoned repos with era-appropriate tooling
+
+### Output
+
+The skill produces the working checkout plus an extended EvalPlan JSON with:
+- The exact commands that worked for each phase
+- A tools manifest (every tool/version installed)
+- A convergence log showing the fix attempts
+- Terminal states per phase (PASS / FAIL / ABSENT / BLOCKED-ON-EXTERNAL)
