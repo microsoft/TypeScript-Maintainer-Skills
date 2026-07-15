@@ -1,8 +1,6 @@
 # Extended EvalPlan schema (build-repo output)
 
-The skill emits the repo's standard `EvalPlan` JSON shape, **extended** with two fields
-the build process needs: a `toolsManifest` and a `convergence` log. Each phase's steps are
-the exact commands that ended the run, and each phase carries a terminal `state`.
+Each phase's steps are the exact commands that ended the run, and each phase carries a terminal `state`.
 
 The base fields match a standard EvalPlan shape, so the artifact stays mechanically
 convertible to a harness plan. The extra fields are additive — a strict harness parser
