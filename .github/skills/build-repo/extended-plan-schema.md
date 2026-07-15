@@ -26,25 +26,6 @@ interface EvalStep {
   expected?: string;                        // default: "0"
 }
 
-interface EvalPlan {
-  projectType: ProjectType;
-  description: string;
-  nodeVersion: string;
-  packageManager?: string;
-  packages: string[];
-  url?: string;
-  branch?: string;
-  commit_id?: string;
-  setup: EvalStep[];
-  compile: EvalStep[];
-  test: EvalStep[];
-  runtime: EvalStep[];
-}
-```
-
-Build-repo extension types (additive — a strict harness parser ignores them):
-
-```typescript
 type PhaseTerminalState = "PASS" | "FAIL" | "ABSENT" | "BLOCKED-ON-EXTERNAL";
 
 // ABSENT and BLOCKED-ON-EXTERNAL MUST carry a reason.
@@ -86,8 +67,19 @@ interface ConvergenceAttempt {
   changed: boolean;     // false marks a plateau (same signature as previous)
 }
 
-// The full extended plan shape.
-interface ExtendedEvalPlan extends EvalPlan {
+interface EvalPlan {
+  projectType: ProjectType;
+  description: string;
+  nodeVersion: string;
+  packageManager?: string;
+  packages: string[];
+  url?: string;
+  branch?: string;
+  commit_id?: string;
+  setup: EvalStep[];
+  compile: EvalStep[];
+  test: EvalStep[];
+  runtime: EvalStep[];
   phaseStates: PhaseStates;
   toolsManifest: ToolEntry[];
   fidelityCompromises: FidelityCompromise[];
