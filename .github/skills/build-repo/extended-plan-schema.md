@@ -1,14 +1,108 @@
 # Extended EvalPlan schema (build-repo output)
 
-The skill emits the repo's standard `EvalPlan` JSON shape, **extended** with two fields
-the build process needs: a `toolsManifest` and a `convergence` log. Each phase's steps are
-the exact commands that ended the run, and each phase carries a terminal `state`.
+Each phase's steps are the exact commands that ended the run, and each phase carries a terminal `state`.
 
 The base fields match a standard EvalPlan shape, so the artifact stays mechanically
 convertible to a harness plan. The extra fields are additive — a strict harness parser
 ignores them.
 
-## Shape
+## Types
+
+Base types (from `packages/eval/src/runtime/types.ts`):
+
+```typescript
+type ProjectType = "cli" | "webapp" | "api" | "library" | "other";
+
+type VerificationMethod = "output-contains" | "exit-code" | "http-status" | "ai-judgment";
+
+interface EvalStep {
+  name: string;
+  command: string;
+  cwd?: string;
+  args?: string[];
+  input?: string;
+  timeout?: number;
+  verificationMethod?: VerificationMethod;  // default: "exit-code"
+  expected?: string;                        // default: "0"
+}
+
+type PhaseTerminalState = "PASS" | "FAIL" | "ABSENT" | "BLOCKED-ON-EXTERNAL";
+
+// ABSENT and BLOCKED-ON-EXTERNAL MUST carry a reason.
+type PhaseState =
+  | { state: "PASS" | "FAIL" }
+  | { state: "ABSENT" | "BLOCKED-ON-EXTERNAL"; reason: string };
+
+interface PhaseStates {
+  setup: PhaseState;
+  compile: PhaseState;
+  test: PhaseState;
+  runtime: PhaseState;
+}
+
+// Every toolchain / system package installed, so the build is reproducible.
+interface ToolEntry {
+  name: string;
+  version: string;
+  how: string;   // acquisition method (e.g. "nvm", "corepack", "apt")
+  why: string;   // trigger (e.g. "engines.node \">=18\"")
+}
+
+interface FidelityCompromise {
+  what: string;  // what was changed
+  why: string;   // why the deviation was necessary
+}
+
+interface ConvergenceSignature {
+  passed: boolean;
+  errorCount: number;
+  messages: string[];
+}
+
+interface ConvergenceAttempt {
+  attempt: number;
+  phase: "setup" | "compile" | "test" | "runtime";
+  signature: ConvergenceSignature;
+  fix: string | null;   // null when the attempt recorded a green result
+  changed: boolean;     // false marks a plateau (same signature as previous)
+}
+
+interface EvalPlan {
+  projectType: ProjectType;
+  description: string;
+  nodeVersion: string;
+  packageManager?: string;
+  packages: string[];
+  url?: string;
+  branch?: string;
+  commit_id?: string;
+  setup: EvalStep[];
+  compile: EvalStep[];
+  test: EvalStep[];
+  runtime: EvalStep[];
+  phaseStates: PhaseStates;
+  toolsManifest: ToolEntry[];
+  fidelityCompromises: FidelityCompromise[];
+  convergence: ConvergenceAttempt[];  // at most 10 entries across all phases
+}
+```
+
+## Field notes
+
+- **`signature`** is the comparison key. Two attempts are the "same outcome" when, per
+  phase, `passed`, `errorCount`, and the *set* of `messages` all match. Normalize messages
+  (strip absolute paths, timestamps, line/col noise) before comparing so cosmetic churn
+  isn't mistaken for progress.
+- **`changed: false`** marks a plateau (the signature equals the previous attempt's). A
+  signature that equals any *earlier* (non-adjacent) attempt marks a cycle — also a stop.
+- **`fix: null`** when an attempt records a green result with no further action.
+- **Hard cap:** at most 10 entries in `convergence` across all phases. Reaching it stops
+  the run regardless of state.
+- **Faithfulness:** no step command may contain exit-code masking (`|| true`, `; true`,
+  …), a swapped pinned TypeScript version, or a narrowed test/runtime. Such a plan is
+  invalid and must not be emitted.
+
+## Example
 
 ```jsonc
 {
@@ -88,18 +182,3 @@ ignores them.
   ]
 }
 ```
-
-## Field notes
-
-- **`signature`** is the comparison key. Two attempts are the "same outcome" when, per
-  phase, `passed`, `errorCount`, and the *set* of `messages` all match. Normalize messages
-  (strip absolute paths, timestamps, line/col noise) before comparing so cosmetic churn
-  isn't mistaken for progress.
-- **`changed: false`** marks a plateau (the signature equals the previous attempt's). A
-  signature that equals any *earlier* (non-adjacent) attempt marks a cycle — also a stop.
-- **`fix: null`** when an attempt records a green result with no further action.
-- **Hard cap:** at most 10 entries in `convergence` across all phases. Reaching it stops
-  the run regardless of state.
-- **Faithfulness:** no step command may contain exit-code masking (`|| true`, `; true`,
-  …), a swapped pinned TypeScript version, or a narrowed test/runtime. Such a plan is
-  invalid and must not be emitted.

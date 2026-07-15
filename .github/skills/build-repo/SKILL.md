@@ -23,7 +23,7 @@ languages are out of scope.
 When you finish, produce:
 
 1. **The working checkout** — the repo cloned and built in the sandbox.
-2. **An extended EvalPlan JSON** — the four-phase plan (the exact commands that worked),
+2. **An EvalPlan JSON** — the four-phase plan (the exact commands that worked),
    extended with a **tools manifest** and a **convergence log**. Schema and example are in
    [extended-plan-schema.md](./extended-plan-schema.md). Write it to your session/output
    folder; do **not** commit it into the target repo.
@@ -151,7 +151,7 @@ manifest rather than hiding it.
 
 ### 6. Emit the result
 
-Write the extended EvalPlan JSON (working commands per phase + tools manifest +
+Write the EvalPlan JSON (working commands per phase + tools manifest +
 convergence log + per-phase terminal states) to your output folder, and summarize for the
 user: what built, what's ABSENT or BLOCKED-ON-EXTERNAL and why, every tool you had to
 install, any fidelity compromises, and — if the build ultimately failed — your diagnosis
