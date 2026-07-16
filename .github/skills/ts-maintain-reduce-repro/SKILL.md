@@ -99,6 +99,28 @@ type NamedBox<T> = {
 };
 ```
 
+The *entire closure of files* must be reduced (excluding the TypeScript standard library files).
+For example, even if you have a "two-line" repro
+```ts
+// BAD: Still lots of code in this import!
+import { foo } from "some-giant-library";
+foo.thisCausesProblems();
+```
+You don't have a minimal repro yet -- `"some-giant-library"` is still a giant surface area to investigate.
+Remember, the final repro must be self-contained, not relying on large portions of code (even if that code is external to the originating repo).
+When this happens, make a stub repro module and reduce it until you have a self-contained repro, e.g.:
+```ts
+// GOOD: Reduce dependencies to their minimum needed to show the issue
+
+// some-giant-library-stub.d.ts
+export function thisCausesProblems(): SomeProbemType;
+type SomeProblemType = string
+
+// entry-point.ts
+import { foo } from "./some-giant-library-stub";
+foo.thisCausesProblems();
+```
+
 Typical operations you should do:
  * Figure out which file is key to demonstrating the bug
  * Make this file as small as possible while still demonstrating the bug
